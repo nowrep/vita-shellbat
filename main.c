@@ -20,16 +20,14 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  */
+#include "log.h"
+
 #include <psp2/kernel/modulemgr.h>
 #include <psp2/kernel/clib.h>
-#include <psp2/io/fcntl.h>
 #include <psp2/power.h>
 #include <taihen.h>
 
 static SceUID g_hooks[2];
-
-// static SceUID logfd;
-static int in_draw_time = 0;
 
 #if 0
 static tai_hook_ref_t ref_hook;
@@ -39,6 +37,8 @@ static int status_draw_battery_patched(int a1, uint8_t a2)
     return TAI_CONTINUE(int, ref_hook, a1, a2);
 }
 #endif
+
+static int in_draw_time = 0;
 
 static tai_hook_ref_t ref_hook0;
 static int status_draw_time_patched(int a1, int a2)
@@ -67,6 +67,8 @@ static uint16_t **some_strdup_patched(uint16_t **a1, uint16_t *a2, int a2_size)
 void _start() __attribute__ ((weak, alias ("module_start")));
 int module_start(SceSize argc, const void *args)
 {
+    LOG("Starting module");
+
     tai_module_info_t info;
     info.size = sizeof(info);
     if (taiGetModuleInfo("SceShell", &info) >= 0) {
@@ -78,7 +80,6 @@ int module_start(SceSize argc, const void *args)
                                                0x183ea4,  // offset
                                                1,         // thumb
                                                status_draw_time_patched);
-
             g_hooks[1] = taiHookFunctionOffset(&ref_hook1,
                                                info.modid,
                                                0,         // segidx
@@ -88,22 +89,20 @@ int module_start(SceSize argc, const void *args)
             break;
         }
         default:
-            // SceShell NID not recognized
+            LOG("SceShell %XNID not recognized", info.module_nid);
             break;
         }
     }
-
-    // logfd = sceIoOpen("ux0:shellbat.log", SCE_O_APPEND | SCE_O_CREAT | SCE_O_WRONLY, 0666);
 
     return SCE_KERNEL_START_SUCCESS;
 }
 
 int module_stop(SceSize argc, const void *args)
 {
+    LOG("Stopping module");
+
     if (g_hooks[0] >= 0) taiHookRelease(g_hooks[0], ref_hook0);
     if (g_hooks[1] >= 0) taiHookRelease(g_hooks[1], ref_hook1);
-
-    // sceIoClose(logfd);
 
     return SCE_KERNEL_STOP_SUCCESS;
 }

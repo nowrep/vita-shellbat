@@ -27,6 +27,7 @@ endif()
 
 add_executable(shellbat
   main.c
+  log.c
 )
 
 target_link_libraries(shellbat
