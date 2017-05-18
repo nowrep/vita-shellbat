@@ -53,13 +53,16 @@ static tai_hook_ref_t ref_hook1;
 static uint16_t **some_strdup_patched(uint16_t **a1, uint16_t *a2, int a2_size)
 {
     if (in_draw_time) {
-        char buff[10];
-        int len = sceClibSnprintf(buff, 10, "  %d%%  ", scePowerGetBatteryLifePercent());
-        for (int i = 0; i < len; ++i) {
-            a2[a2_size + i] = buff[i];
+        int percent = scePowerGetBatteryLifePercent();
+        if (percent >= 0 && percent <= 100) {
+            char buff[10];
+            int len = sceClibSnprintf(buff, 10, "  %d%%  ", percent);
+            for (int i = 0; i < len; ++i) {
+                a2[a2_size + i] = buff[i];
+            }
+            a2[a2_size + len] = 0;
+            return TAI_CONTINUE(uint16_t**, ref_hook1, a1, a2, a2_size + len);
         }
-        a2[a2_size + len] = 0;
-        return TAI_CONTINUE(uint16_t**, ref_hook1, a1, a2, a2_size + len);
     }
     return TAI_CONTINUE(uint16_t**, ref_hook1, a1, a2, a2_size);
 }
