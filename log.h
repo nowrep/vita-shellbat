@@ -26,7 +26,7 @@
 
 #include <psp2/kernel/clib.h>
 
-#if 1
+#if 0
 #define LOG(x, ...) _log(x, ##__VA_ARGS__)
 #else
 #define LOG(x, ...)
