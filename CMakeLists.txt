@@ -37,6 +37,7 @@ target_link_libraries(shellbat
   k
   gcc
   ScePower_stub
+  SceKernelModulemgr_stub
 )
 
 set_target_properties(shellbat
@@ -44,5 +45,6 @@ set_target_properties(shellbat
 )
 
 vita_create_self(shellbat.suprx shellbat
+  UNSAFE
   CONFIG ${CMAKE_SOURCE_DIR}/shellbat.yml
 )

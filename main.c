@@ -23,29 +23,60 @@
 #include "log.h"
 
 #include <psp2/kernel/modulemgr.h>
+#include <psp2/kernel/processmgr.h>
 #include <psp2/kernel/clib.h>
 #include <psp2/power.h>
 #include <taihen.h>
 
+/*
+offset 0x1844f0:
+int status_draw_battery_patched(int a1, uint8_t a2);
+*/
+
 static SceUID g_hooks[2];
 
-#if 0
-static tai_hook_ref_t ref_hook;
-// offset 0x1844f0
-static int status_draw_battery_patched(int a1, uint8_t a2)
+uint32_t text_addr, text_size, data_addr, data_size;
+
+// Functions
+static int (*scePafWidgetSetFontSize)(void *widget, float size, int unk0, int pos, int len); // 22.0 - normal size, 16.0 - small size
+
+static void get_functions()
 {
-    return TAI_CONTINUE(int, ref_hook, a1, a2);
+    scePafWidgetSetFontSize = (void*) text_addr + 0x45ce80;
 }
-#endif
+
+static int digit_len(int num)
+{
+    if (num < 10) {
+        return 1;
+    } else if (num < 100) {
+        return 2;
+    } else {
+        return 3;
+    }
+}
 
 static int in_draw_time = 0;
+static int ampm_start = -1;
+static int bat_num_start = 0;
+static int bat_num_len = 0;
+static int percent_start = 0;
 
 static tai_hook_ref_t ref_hook0;
-static int status_draw_time_patched(int a1, int a2)
+static int status_draw_time_patched(void *a1, int a2)
 {
     in_draw_time = 1;
     int out = TAI_CONTINUE(int, ref_hook0, a1, a2);
     in_draw_time = 0;
+    if (a1 && scePafWidgetSetFontSize) {
+        // Restore AM/PM size
+        if (ampm_start != -1) {
+            scePafWidgetSetFontSize(a1, 16.0, 1, ampm_start, 2);
+            scePafWidgetSetFontSize(a1, 22.0, 1, bat_num_start, bat_num_len);
+        }
+        // Make percent sign smaller
+        scePafWidgetSetFontSize(a1, 16.0, 1, percent_start, 1);
+    }
     return out;
 }
 
@@ -60,11 +91,21 @@ static uint16_t **some_strdup_patched(uint16_t **a1, uint16_t *a2, int a2_size)
         }
         oldpercent = percent;
         char buff[10];
-        int len = sceClibSnprintf(buff, 10, "  %d%%  ", percent);
+        int len = sceClibSnprintf(buff, 10, "  %d%%", percent);
         for (int i = 0; i < len; ++i) {
             a2[a2_size + i] = buff[i];
         }
         a2[a2_size + len] = 0;
+
+        if (a2[a2_size - 1] == 'M') {
+            ampm_start = a2_size - 2;
+        } else {
+            ampm_start = -1;
+        }
+        bat_num_start = a2_size + 2;
+        bat_num_len = digit_len(percent);
+        percent_start = bat_num_start + bat_num_len;
+
         return TAI_CONTINUE(uint16_t**, ref_hook1, a1, a2, a2_size + len);
     }
     return TAI_CONTINUE(uint16_t**, ref_hook1, a1, a2, a2_size);
@@ -98,6 +139,19 @@ int module_start(SceSize argc, const void *args)
             LOG("SceShell %XNID not recognized", info.module_nid);
             break;
         }
+    }
+
+    // Modified from TheOfficialFloW/Adrenaline
+    SceKernelModuleInfo mod_info;
+    mod_info.size = sizeof(SceKernelModuleInfo);
+    if (sceKernelGetModuleInfo(info.modid, &mod_info) >= 0) {
+        text_addr = (uint32_t) mod_info.segments[0].vaddr;
+        text_size = (uint32_t) mod_info.segments[0].memsz;
+        data_addr = (uint32_t) mod_info.segments[1].vaddr;
+        data_size = (uint32_t) mod_info.segments[1].memsz;
+        get_functions();
+    } else {
+        LOG("Error resolving functions");
     }
 
     return SCE_KERNEL_START_SUCCESS;
