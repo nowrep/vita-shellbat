@@ -40,7 +40,7 @@ uint32_t text_addr, text_size, data_addr, data_size;
 // Functions
 static int (*scePafWidgetSetFontSize)(void *widget, float size, int unk0, int pos, int len); // 22.0 - normal size, 16.0 - small size
 
-static void get_functions()
+static void get_functions_retail()
 {
     scePafWidgetSetFontSize = (void*) text_addr + 0x45ce80;
 }
@@ -68,7 +68,7 @@ static int status_draw_time_patched(void *a1, int a2)
     in_draw_time = 1;
     int out = TAI_CONTINUE(int, ref_hook0, a1, a2);
     in_draw_time = 0;
-    if (a1 && scePafWidgetSetFontSize) {
+    if (a1) {
         // Restore AM/PM size
         if (ampm_start != -1) {
             scePafWidgetSetFontSize(a1, 16.0, 1, ampm_start, 2);
@@ -118,40 +118,45 @@ int module_start(SceSize argc, const void *args)
 
     tai_module_info_t info;
     info.size = sizeof(info);
-    if (taiGetModuleInfo("SceShell", &info) >= 0) {
-        switch (info.module_nid) {
-        case 0x0552F692: { // retail 3.60 SceShell
-            g_hooks[0] = taiHookFunctionOffset(&ref_hook0,
-                                               info.modid,
-                                               0,         // segidx
-                                               0x183ea4,  // offset
-                                               1,         // thumb
-                                               status_draw_time_patched);
-            g_hooks[1] = taiHookFunctionOffset(&ref_hook1,
-                                               info.modid,
-                                               0,         // segidx
-                                               0x40e0b4,  // offset
-                                               1,         // thumb
-                                               some_strdup_patched);
-            break;
-        }
-        default:
-            LOG("SceShell %XNID not recognized", info.module_nid);
-            break;
-        }
+    int ret = taiGetModuleInfo("SceShell", &info);
+    if (ret < 0) {
+        LOG("taiGetModuleInfo error %X", ret);
+        return SCE_KERNEL_START_FAILED;
     }
 
     // Modified from TheOfficialFloW/Adrenaline
     SceKernelModuleInfo mod_info;
     mod_info.size = sizeof(SceKernelModuleInfo);
-    if (sceKernelGetModuleInfo(info.modid, &mod_info) >= 0) {
-        text_addr = (uint32_t) mod_info.segments[0].vaddr;
-        text_size = (uint32_t) mod_info.segments[0].memsz;
-        data_addr = (uint32_t) mod_info.segments[1].vaddr;
-        data_size = (uint32_t) mod_info.segments[1].memsz;
-        get_functions();
-    } else {
-        LOG("Error resolving functions");
+    ret = sceKernelGetModuleInfo(info.modid, &mod_info);
+    if (ret < 0) {
+        LOG("sceKernelGetModuleInfo error %X", ret);
+        return SCE_KERNEL_START_FAILED;
+    }
+    text_addr = (uint32_t) mod_info.segments[0].vaddr;
+    text_size = (uint32_t) mod_info.segments[0].memsz;
+    data_addr = (uint32_t) mod_info.segments[1].vaddr;
+    data_size = (uint32_t) mod_info.segments[1].memsz;
+
+    switch (info.module_nid) {
+    case 0x0552F692: // retail 3.60 SceShell
+        g_hooks[0] = taiHookFunctionOffset(&ref_hook0,
+                                           info.modid,
+                                           0,         // segidx
+                                           0x183ea4,  // offset
+                                           1,         // thumb
+                                           status_draw_time_patched);
+        g_hooks[1] = taiHookFunctionOffset(&ref_hook1,
+                                           info.modid,
+                                           0,         // segidx
+                                           0x40e0b4,  // offset
+                                           1,         // thumb
+                                           some_strdup_patched);
+        get_functions_retail();
+        break;
+
+    default:
+        LOG("SceShell %X NID not recognized", info.module_nid);
+        return SCE_KERNEL_START_FAILED;
     }
 
     return SCE_KERNEL_START_SUCCESS;
