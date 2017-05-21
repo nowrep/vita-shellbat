@@ -38,7 +38,17 @@ static SceUID g_hooks[2];
 uint32_t text_addr, text_size, data_addr, data_size;
 
 // Functions
-static int (*scePafWidgetSetFontSize)(void *widget, float size, int unk0, int pos, int len); // 22.0 - normal size, 16.0 - small size
+
+/**
+ * ScePafWidget_39B15B98
+ *
+ * @param widget  Widget ptr
+ * @param size    Font size (22.0 - standard font size in statusbar)
+ * @param unk0    Unknown, pass 1
+ * @param pos     Start of part of text to set size
+ * @param len     Length of part of text to set size from pos
+ */
+static int (*scePafWidgetSetFontSize)(void *widget, float size, int unk0, int pos, int len);
 
 static void get_functions_retail()
 {
@@ -72,9 +82,8 @@ static int status_draw_time_patched(void *a1, int a2)
         // Restore AM/PM size
         if (ampm_start != -1) {
             scePafWidgetSetFontSize(a1, 16.0, 1, ampm_start, 2);
-            scePafWidgetSetFontSize(a1, 22.0, 1, bat_num_start, bat_num_len);
         }
-        // Make percent sign smaller
+        scePafWidgetSetFontSize(a1, 20.0, 1, bat_num_start, bat_num_len);
         scePafWidgetSetFontSize(a1, 16.0, 1, percent_start, 1);
     }
     return out;
