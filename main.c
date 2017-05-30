@@ -55,6 +55,11 @@ static void get_functions_retail()
     scePafWidgetSetFontSize = (void*) text_addr + 0x45ce80;
 }
 
+static void get_functions_pdel()
+{
+    scePafWidgetSetFontSize = (void*) text_addr + 0x453038;
+}
+
 static int digit_len(int num)
 {
     if (num < 10) {
@@ -146,27 +151,38 @@ int module_start(SceSize argc, const void *args)
     data_addr = (uint32_t) mod_info.segments[1].vaddr;
     data_size = (uint32_t) mod_info.segments[1].memsz;
 
+    uint32_t offsets[2];
+
     switch (info.module_nid) {
     case 0x0552F692: // retail 3.60 SceShell
-        g_hooks[0] = taiHookFunctionOffset(&ref_hook0,
-                                           info.modid,
-                                           0,         // segidx
-                                           0x183ea4,  // offset
-                                           1,         // thumb
-                                           status_draw_time_patched);
-        g_hooks[1] = taiHookFunctionOffset(&ref_hook1,
-                                           info.modid,
-                                           0,         // segidx
-                                           0x40e0b4,  // offset
-                                           1,         // thumb
-                                           some_strdup_patched);
+        offsets[0] = 0x183ea4;
+        offsets[1] = 0x40e0b4;
         get_functions_retail();
+        break;
+
+    case 0x6CB01295: // PDEL 3.60 SceShell
+        offsets[0] = 0x17c2d8;
+        offsets[1] = 0x404828;
+        get_functions_pdel();
         break;
 
     default:
         LOG("SceShell %X NID not recognized", info.module_nid);
         return SCE_KERNEL_START_FAILED;
     }
+
+    g_hooks[0] = taiHookFunctionOffset(&ref_hook0,
+                                       info.modid,
+                                       0,          // segidx
+                                       offsets[0], // offset
+                                       1,          // thumb
+                                       status_draw_time_patched);
+    g_hooks[1] = taiHookFunctionOffset(&ref_hook1,
+                                       info.modid,
+                                       0,          // segidx
+                                       offsets[1], // offset
+                                       1,          // thumb
+                                       some_strdup_patched);
 
     return SCE_KERNEL_START_SUCCESS;
 }
