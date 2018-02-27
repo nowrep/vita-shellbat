@@ -52,13 +52,22 @@ static int (*scePafWidgetSetFontSize)(void *widget, float size, int unk0, int po
 
 static void get_functions_retail()
 {
-    scePafWidgetSetFontSize = (void*) text_addr + 0x45ce80;
+    scePafWidgetSetFontSize = (void*) text_addr + 0x45CE80;
 }
 
 static void get_functions_testkit()
 {
     scePafWidgetSetFontSize = (void*) text_addr + 0x453038;
 }
+
+static void get_functions_devkit()
+{
+    scePafWidgetSetFontSize = (void*) text_addr + 0x44E5F8;
+}
+
+
+
+
 
 static int digit_len(int num)
 {
@@ -130,6 +139,7 @@ int module_start(SceSize argc, const void *args)
 {
     LOG("Starting module");
 
+
     tai_module_info_t info;
     info.size = sizeof(info);
     int ret = taiGetModuleInfo("SceShell", &info);
@@ -166,10 +176,23 @@ int module_start(SceSize argc, const void *args)
         get_functions_testkit();
         break;
 
+    case 0x6CB01295: { // PDEL 3.60 SceShell
+	    offsets[0] = 0x17B8DC;
+	    offsets[1] = 0x400028;
+        get_functions_devkit();
+	    break;
+
+    }
+
     default:
         LOG("SceShell %X NID not recognized", info.module_nid);
         return SCE_KERNEL_START_FAILED;
     }
+
+
+
+
+
 
     g_hooks[0] = taiHookFunctionOffset(&ref_hook0,
                                        info.modid,
