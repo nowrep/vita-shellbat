@@ -172,10 +172,10 @@ int module_start(SceSize argc, const void *args)
         break;
 
     case 0x6CB01295: // PDEL 3.60 SceShell
-	    offsets[0] = 0x17B8DC;
-	    offsets[1] = 0x400028;
+	offsets[0] = 0x17B8DC;
+	offsets[1] = 0x400028;
         get_functions_devkit();
-	    break;
+	break;
 
     default:
         LOG("SceShell %X NID not recognized", info.module_nid);
