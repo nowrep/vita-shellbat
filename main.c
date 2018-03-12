@@ -55,6 +55,11 @@ static void get_functions_retail()
     scePafWidgetSetFontSize = (void*) text_addr + 0x45ce80;
 }
 
+static void get_functions_retail_365()
+{
+    scePafWidgetSetFontSize = (void*) text_addr + 0x45d2c8;
+}
+
 static void get_functions_testkit()
 {
     scePafWidgetSetFontSize = (void*) text_addr + 0x453038;
@@ -163,6 +168,12 @@ int module_start(SceSize argc, const void *args)
         offsets[0] = 0x183ea4;
         offsets[1] = 0x40e0b4;
         get_functions_retail();
+        break;
+
+    case 0x5549BF1F: // retail 3.65 SceShell
+        offsets[0] = 0x183f6c;
+        offsets[1] = 0x40e4fc;
+        get_functions_retail_365();
         break;
 
     case 0xEAB89D5C: // testkit 3.60 SceShell
