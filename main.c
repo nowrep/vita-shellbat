@@ -50,7 +50,7 @@ uint32_t text_addr, text_size, data_addr, data_size;
  */
 static int (*scePafWidgetSetFontSize)(void *widget, float size, int unk0, int pos, int len);
 
-static void get_functions_retail()
+static void get_functions_retail_360()
 {
     scePafWidgetSetFontSize = (void*) text_addr + 0x45ce80;
 }
@@ -60,12 +60,17 @@ static void get_functions_retail_365()
     scePafWidgetSetFontSize = (void*) text_addr + 0x45d2c8;
 }
 
-static void get_functions_testkit()
+static void get_functions_retail_368()
+{
+    scePafWidgetSetFontSize = (void*) text_addr + 0x45D2C8;
+}
+
+static void get_functions_testkit_360()
 {
     scePafWidgetSetFontSize = (void*) text_addr + 0x453038;
 }
 
-static void get_functions_devkit()
+static void get_functions_devkit_360()
 {
     scePafWidgetSetFontSize = (void*) text_addr + 0x44E5F8;
 }
@@ -167,7 +172,7 @@ int module_start(SceSize argc, const void *args)
     case 0x0552F692: // retail 3.60 SceShell
         offsets[0] = 0x183ea4;
         offsets[1] = 0x40e0b4;
-        get_functions_retail();
+        get_functions_retail_360();
         break;
 
     case 0x5549BF1F: // retail 3.65 SceShell
@@ -176,16 +181,22 @@ int module_start(SceSize argc, const void *args)
         get_functions_retail_365();
         break;
 
-    case 0xEAB89D5C: // testkit 3.60 SceShell
-        offsets[0] = 0x17c2d8;
+    case 0x12DAC0F3: // retail 3.68 SceShell
+        offsets[0] = 0x183F6C;
+        offsets[1] = 0x40E4FC;
+        get_functions_retail_368();
+        break;
+
+    case 0xEAB89D5C: // PTEL 3.60 SceShell
+        offsets[0] = 0x17C2D8;
         offsets[1] = 0x404828;
-        get_functions_testkit();
+        get_functions_testkit_360();
         break;
 
     case 0x6CB01295: // PDEL 3.60 SceShell
         offsets[0] = 0x17B8DC;
         offsets[1] = 0x400028;
-        get_functions_devkit();
+        get_functions_devkit_360();
         break;
 
     default:
