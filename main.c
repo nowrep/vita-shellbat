@@ -186,7 +186,7 @@ int module_start(SceSize argc, const void *args)
         get_functions_retail_365();
         break;
 		
-	case 0x34B4D82E:
+    case 0x34B4D82E:
 		offsets[0] = 0x183F6C;
 		offsets[1] = 0x40E4FC;
 		get_functions_retail_367();
