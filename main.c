@@ -75,6 +75,11 @@ static void get_functions_testkit_360()
     scePafWidgetSetFontSize = (void*) text_addr + 0x453038;
 }
 
+static void get_functions_testkit_365()
+{
+    scePafWidgetSetFontSize = (void*) text_addr + 0x453478;
+}
+
 static void get_functions_devkit_360()
 {
     scePafWidgetSetFontSize = (void*) text_addr + 0x44E5F8;
@@ -186,7 +191,7 @@ int module_start(SceSize argc, const void *args)
         get_functions_retail_365();
         break;
 		
-	case 0x34B4D82E:
+	case 0x34B4D82E: // retail 3.67 SceShell
 		offsets[0] = 0x183F6C;
 		offsets[1] = 0x40E4FC;
 		get_functions_retail_367();
@@ -203,12 +208,24 @@ int module_start(SceSize argc, const void *args)
         offsets[1] = 0x404828;
         get_functions_testkit_360();
         break;
+	
+	case 0x587F9CED: // PTEL 3.65 SceShell
+        offsets[0] = 0x17C3A0;
+        offsets[1] = 0x404C68;
+        get_functions_testkit_365();
+        break;
 
     case 0x6CB01295: // PDEL 3.60 SceShell
         offsets[0] = 0x17B8DC;
         offsets[1] = 0x400028;
         get_functions_devkit_360();
         break;
+			
+	case 0xE6A02F2B: // PDEL 3.65 SceShell
+		offsets[0] = 0x17B9A4;
+		offsets[1] = 0x400498;
+        get_functions_devkit_365();
+		break;
 
     default:
         LOG("SceShell %X NID not recognized", info.module_nid);
