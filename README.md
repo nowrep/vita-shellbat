@@ -1,4 +1,4 @@
-# vita-shellbat
+# ShellBalt
 
 taiHEN plugin that shows battery percent in statusbar
 
@@ -11,5 +11,8 @@ Add this plugin under `*main` section in `ux0:tai/config.txt`:
 
 ```
 *main
-ux0:tai/shellbat.suprx
+ux0:tai/shellbalt.suprx
 ```
+
+Thanks to: 
+https://github.com/nowrep/vita-shellbat
