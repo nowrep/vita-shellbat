@@ -191,6 +191,7 @@ int module_start(SceSize argc, const void *args)
         get_functions_retail_365();
         break;
 
+    case 0x34B4D82E: // retail 3.67 SceShell
     case 0x12DAC0F3: // retail 3.68 SceShell
         offsets[0] = 0x183F6C;
         offsets[1] = 0x40E4FC;
