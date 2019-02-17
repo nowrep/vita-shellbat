@@ -50,6 +50,11 @@ uint32_t text_addr, text_size, data_addr, data_size;
  */
 static int (*scePafWidgetSetFontSize)(void *widget, float size, int unk0, int pos, int len);
 
+static void get_functions_retail_355()
+{
+    scePafWidgetSetFontSize = (void*) text_addr + 0x45c950;
+}
+
 static void get_functions_retail_360()
 {
     scePafWidgetSetFontSize = (void*) text_addr + 0x45ce80;
@@ -174,6 +179,12 @@ int module_start(SceSize argc, const void *args)
     uint32_t offsets[2];
 
     switch (info.module_nid) {
+    case 0x8978D25D: // retail 3.55 SceShell
+        offsets[0] = 0x183EF0;
+        offsets[1] = 0x40DBD8;
+        get_functions_retail_355();
+        break;
+
     case 0x0552F692: // retail 3.60 SceShell
         offsets[0] = 0x183ea4;
         offsets[1] = 0x40e0b4;
