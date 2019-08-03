@@ -25,6 +25,7 @@
 #include <psp2/kernel/modulemgr.h>
 #include <psp2/kernel/processmgr.h>
 #include <psp2/kernel/clib.h>
+#include <psp2/net/netctl.h>
 #include <psp2/power.h>
 #include <taihen.h>
 
@@ -97,6 +98,8 @@ static int digit_len(int num)
 }
 
 static int in_draw_time = 0;
+static int ip_start = 0;
+static int ip_len = 0;
 static int ampm_start = -1;
 static int bat_num_start = 0;
 static int bat_num_len = 0;
@@ -115,6 +118,10 @@ static int status_draw_time_patched(void *a1, int a2)
         }
         scePafWidgetSetFontSize(a1, 20.0, 1, bat_num_start, bat_num_len);
         scePafWidgetSetFontSize(a1, 16.0, 1, percent_start, 1);
+
+        if (ip_len > 0) {
+            scePafWidgetSetFontSize(a1, 20.0, 1, ip_start, ip_len);
+        }
     }
     return out;
 }
@@ -123,6 +130,33 @@ static tai_hook_ref_t ref_hook1;
 static uint16_t **some_strdup_patched(uint16_t **a1, uint16_t *a2, int a2_size)
 {
     if (in_draw_time) {
+        if (a2[a2_size - 1] == 'M') {
+            ampm_start = a2_size - 2;
+        } else {
+            ampm_start = -1;
+        }
+
+        int position = a2_size;
+
+        a2[position++] = ' ';
+        a2[position++] = ' ';
+
+        SceNetCtlInfo info = {0};
+        if(sceNetCtlInetGetInfo(SCE_NETCTL_INFO_GET_IP_ADDRESS, &info) >= 0) {
+            ip_start = position;
+
+            int i;
+            for (i = 0; i < 16 && info.ip_address[i] != 0; ++i) {
+                a2[position + i] = info.ip_address[i];
+            }
+            
+            position += + i;
+            ip_len = i;
+
+            a2[position++] = ' ';
+            a2[position++] = ' ';
+        }
+
         static int oldpercent = 0;
         int percent = scePowerGetBatteryLifePercent();
         if (percent < 0 || percent > 100) {
@@ -130,22 +164,19 @@ static uint16_t **some_strdup_patched(uint16_t **a1, uint16_t *a2, int a2_size)
         }
         oldpercent = percent;
         char buff[10];
-        int len = sceClibSnprintf(buff, 10, "  %d%%", percent);
-        for (int i = 0; i < len; ++i) {
-            a2[a2_size + i] = buff[i];
+        int perc_len = sceClibSnprintf(buff, 10, "%d%%", percent);
+        for (int i = 0; i < perc_len; ++i) {
+            a2[position + i] = buff[i];
         }
-        a2[a2_size + len] = 0;
-
-        if (a2[a2_size - 1] == 'M') {
-            ampm_start = a2_size - 2;
-        } else {
-            ampm_start = -1;
-        }
-        bat_num_start = a2_size + 2;
+        bat_num_start = position;
         bat_num_len = digit_len(percent);
         percent_start = bat_num_start + bat_num_len;
 
-        return TAI_CONTINUE(uint16_t**, ref_hook1, a1, a2, a2_size + len);
+        position += perc_len;
+        a2[position] = 0;
+        a2_size = position;
+
+        return TAI_CONTINUE(uint16_t**, ref_hook1, a1, a2, a2_size);
     }
     return TAI_CONTINUE(uint16_t**, ref_hook1, a1, a2, a2_size);
 }
